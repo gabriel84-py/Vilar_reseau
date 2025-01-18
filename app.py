@@ -32,16 +32,54 @@ Sécurité : Implémente des mesures de sécurité pour protéger les données d
 Scalabilité : Prépare ton application à gérer un grand nombre d'utilisateurs et de données."""
 
 
-import flask
-import time
+from flask import Flask, request, render_template, redirect, url_for
+import os 
 
+app = Flask(__name__)
 
-app = flask.Flask(__name__)
+usernamesok = ["gabriel"]
+go_to_login_verif = False
+chemin_fichier = "/Users/gabrieljeanvermeille/venv/bin/Vilar_reseau/mdp.txt"
 
-@app.route("/home")
+@app.route('/')
+def principale():
+    return redirect('/login')
+
+@app.route('/login', methods=['GET', 'POST'])
+
+def login():
+    global chemin_fichier
+    global usernamesok
+    global go_to_login_verif
+    global inlycee
+    if request.method == 'POST':
+        new_username = request.form.get('new_username')
+        username = request.form.get('username')
+        inlycee = request.form.get('in_lycée')
+        if new_username:
+            if inlycee == "C":    
+                usernamesok.append(new_username)
+                with open(chemin_fichier, 'a') as fichier:
+                    fichier.write(new_username + '\n')  
+                print(f'nwbie : {new_username}')
+        print(f"Username reçu : {username}")
+        if username in usernamesok:
+            go_to_login_verif = True
+            return redirect(url_for('home', username=username))
+        else:
+            return render_template("login.html", error="Mauvais mdp !")
+    return render_template('login.html')
+
+@app.route('/home') 
 
 def home():
-    return"<h1>hello world !</h1>"
+    global go_to_login_verif
+    if go_to_login_verif == True:
+        username = request.args.get('username')
+        go_to_login_verif = False
+        return render_template('home.html', username=username)
+    else:
+        return redirect('/login')
 
 if __name__ == "__main__":
     app.run(debug=True, host='127.0.0.1', port='5000')
